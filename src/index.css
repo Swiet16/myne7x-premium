@@ -1,0 +1,279 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Modern Neon Design System */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Modern Dark Base */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 7%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 7%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Neon Primary - Electric Blue */
+    --primary: 200 100% 50%;
+    --primary-foreground: 240 10% 3.9%;
+
+    /* Neon Secondary - Purple */
+    --secondary: 280 100% 60%;
+    --secondary-foreground: 0 0% 98%;
+
+    /* Neon Accent - Cyan */
+    --accent: 180 100% 50%;
+    --accent-foreground: 240 10% 3.9%;
+
+    --muted: 240 10% 15%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 10% 15%;
+    --input: 240 10% 15%;
+    --ring: 200 100% 50%;
+
+    --radius: 0.75rem;
+
+    /* Neon Colors */
+    --neon-blue: 200 100% 50%;
+    --neon-purple: 280 100% 60%;
+    --neon-cyan: 180 100% 50%;
+    --neon-pink: 330 100% 60%;
+    --neon-green: 120 100% 50%;
+    --neon-orange: 30 100% 50%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--neon-blue)), hsl(var(--neon-purple)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--neon-cyan)), hsl(var(--neon-pink)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--neon-purple)), hsl(var(--neon-cyan)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--neon-blue) / 0.2), hsl(var(--neon-purple) / 0.2), hsl(var(--neon-cyan) / 0.2));
+
+    /* Shadows & Glows */
+    --shadow-neon-blue: 0 0 20px hsl(var(--neon-blue) / 0.5);
+    --shadow-neon-purple: 0 0 20px hsl(var(--neon-purple) / 0.5);
+    --shadow-neon-cyan: 0 0 20px hsl(var(--neon-cyan) / 0.5);
+    --glow-intense: 0 0 40px hsl(var(--primary) / 0.8);
+
+    /* Sidebar */
+    --sidebar-background: 240 10% 5%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 200 100% 50%;
+    --sidebar-primary-foreground: 240 10% 3.9%;
+    --sidebar-accent: 240 10% 10%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 10% 15%;
+    --sidebar-ring: 200 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-['Inter'];
+    background: radial-gradient(ellipse at top, hsl(var(--neon-blue) / 0.05), transparent),
+                radial-gradient(ellipse at bottom, hsl(var(--neon-purple) / 0.05), transparent),
+                hsl(var(--background));
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-['Orbitron'];
+  }
+}
+
+@layer components {
+  /* Neon Button Variants */
+  .btn-neon {
+    @apply relative overflow-hidden;
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-neon-blue);
+    transition: all 0.3s ease;
+  }
+
+  .btn-neon:hover {
+    box-shadow: var(--glow-intense);
+    transform: translateY(-2px);
+  }
+
+  .btn-neon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn-neon:hover::before {
+    left: 100%;
+  }
+
+  /* Card Neon Effects */
+  .card-neon {
+    @apply border border-border/20 backdrop-blur-sm;
+    background: hsl(var(--card) / 0.8);
+    box-shadow: 0 8px 32px hsl(var(--primary) / 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .card-neon:hover {
+    box-shadow: 0 8px 32px hsl(var(--primary) / 0.3);
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  /* Text Glow Effects */
+  .text-glow {
+    text-shadow: 0 0 10px hsl(var(--primary) / 0.8);
+  }
+
+  .text-glow-secondary {
+    text-shadow: 0 0 10px hsl(var(--secondary) / 0.8);
+  }
+
+  .text-glow-accent {
+    text-shadow: 0 0 10px hsl(var(--accent) / 0.8);
+  }
+
+  /* Animated Gradients */
+  .bg-gradient-animated {
+    background: linear-gradient(-45deg, 
+      hsl(var(--neon-blue)), 
+      hsl(var(--neon-purple)), 
+      hsl(var(--neon-cyan)), 
+      hsl(var(--neon-pink))
+    );
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Pulse Animation */
+  .pulse-neon {
+    animation: pulseNeon 2s infinite;
+  }
+
+  @keyframes pulseNeon {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(var(--primary) / 0.8);
+    }
+  }
+
+  /* Floating Animation */
+  .float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+
+  /* Slide In Animations */
+  .slide-in-left {
+    animation: slideInLeft 0.8s ease-out;
+  }
+
+  .slide-in-right {
+    animation: slideInRight 0.8s ease-out;
+  }
+
+  .slide-in-up {
+    animation: slideInUp 0.8s ease-out;
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-100px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(100px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Typing Animation */
+  .typing {
+    overflow: hidden;
+    border-right: 2px solid hsl(var(--primary));
+    white-space: nowrap;
+    animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+  }
+
+  @keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+  }
+
+  @keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: hsl(var(--primary)) }
+  }
+
+  /* Scale In Animation */
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out;
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
