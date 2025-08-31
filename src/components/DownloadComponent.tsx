@@ -9,7 +9,7 @@ import { Download, Clock, CheckCircle } from 'lucide-react';
 interface DownloadComponentProps {
   product: {
     id: string;
-    title: string;
+    title: string; 
     price: number;
     file_url?: string;
   };
@@ -37,13 +37,7 @@ const DownloadComponent = ({ product, onClose }: DownloadComponentProps) => {
     try {
       if (product.file_url) {
         // Extract filename from URL - handle both direct paths and full URLs
-        let filename = '';
-        if (product.file_url.includes('/')) {
-          const urlParts = product.file_url.split('/');
-          filename = urlParts[urlParts.length - 1];
-        } else {
-          filename = product.file_url;
-        }
+        let filename = product.file_url.split('/').pop() || product.file_url;
 
         // Get signed URL from Supabase storage
         const { data, error } = await supabase.storage
@@ -57,7 +51,11 @@ const DownloadComponent = ({ product, onClose }: DownloadComponentProps) => {
         
         if (data?.signedUrl) {
           // Fetch the file and trigger download
-          const response = await fetch(data.signedUrl);
+          const response = await fetch(data.signedUrl, {
+            headers: {
+              'Content-Type': 'application/octet-stream',
+            },
+          });
           
           if (!response.ok) {
             throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
