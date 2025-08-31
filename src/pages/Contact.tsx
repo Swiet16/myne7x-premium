@@ -84,8 +84,8 @@ const Contact = () => {
       icon: Globe,
       title: "Website",
       description: "Visit our main site",
-      contact: "myne7x-premium.vercel.app",
-      action: "https://myne7x-premium.vercel.app/",
+      contact: "myne7x.store",
+      action: "https://myne7x.store",
       color: "text-neon-cyan"
     }
   ];
