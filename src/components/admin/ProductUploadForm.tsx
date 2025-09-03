@@ -49,36 +49,28 @@ const ProductUploadForm = ({ onProductUploaded }: ProductUploadFormProps) => {
   const uploadFile = async (file: File, bucket: string) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `${fileName}`;
+   //  update 
+      const uploadFile = async (file: File, bucket: string, customName?: string) => {
+  const fileExt = file.name.split('.').pop();
+  
+  // Use custom name (product title) if provided, otherwise use original filename
+  let fileName;
+  if (customName) {
+    // Sanitize the custom name for filename
+    const sanitizedName = customName
+      .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove special characters
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .trim();
+    fileName = `${sanitizedName}.${fileExt}`;
+  } else {
+    fileName = `${Math.random()}.${fileExt}`;
+  }
+  
+  const filePath = `${fileName}`;
+  // ... rest of upload logic
+};
 
-    const { error } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, file);
-
-    if (error) throw error;
-
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(filePath);
-
-    return data.publicUrl;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title || (!formData.isFree && !formData.price)) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setUploading(true);
-    try {
-      let imageUrl = '';
-      let fileUrl = '';
+  
 
       // Upload image if provided
       if (imageFile) {
