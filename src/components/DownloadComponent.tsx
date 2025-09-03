@@ -48,58 +48,101 @@ const DownloadComponent = ({ product, onClose }: DownloadComponentProps) => {
           console.error('Supabase storage error:', error);
           throw new Error(`Storage error: ${error.message}`);
         }
-
-                if (data?.signedUrl) {
-          // Fetch the file and trigger download with proper headers to prevent 406 errors
-          const response = await fetch(data.signedUrl, {
-            method: 'GET',
-            headers: {
-              'Accept': '*/*',
-              'Accept-Encoding': 'gzip, deflate, br',
-              'Accept-Language': 'en-US,en;q=0.9',
-              'User-Agent': 'Mozilla/5.0 (compatible)',
-              'Referer': window.location.origin,
-              'Origin': window.location.origin,
-            },
-            mode: 'cors',
-            cache: 'no-cache',
-          });
+        
+        if (data?.signedUrl) {
+          // For production environments, try direct link download first (more reliable)
+          const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('replit');
           
-          if (!response.ok) {
-            // If direct fetch fails with 406 or other errors, try alternative download method
-            if (response.status === 406) {
-              console.log('406 error detected, attempting direct link download...');
-              // Use direct download as fallback
-              const link = document.createElement('a');
-              link.href = data.signedUrl;
-              link.download = `${product.title}.zip`;
-              link.target = '_blank';
-              link.rel = 'noopener noreferrer';
-              document.body.appendChild(link);
+          if (isProduction) {
+            console.log('Production environment detected, using direct download method');
+            // Use direct download method for production
+            const link = document.createElement('a');
+            link.href = data.signedUrl;
+            link.download = `${product.title}.zip`;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            
+            // Add a small delay to ensure the link is ready
+            setTimeout(() => {
               link.click();
               document.body.removeChild(link);
               
               setDownloadComplete(true);
               toast({
                 title: "Download Started",
-                description: `${product.title} download has been initiated`,
+                description: `${product.title} download has been initiated. Check your Downloads folder.`,
               });
-              return;
-            }
-            throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+            }, 100);
+            return;
           }
           
-          // Cleanup
-          setTimeout(() => {
+          // For development, try blob method first with fallback
+          try {
+            const response = await fetch(data.signedUrl, {
+              method: 'GET',
+              headers: {
+                'Accept': '*/*',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'User-Agent': 'Mozilla/5.0 (compatible)',
+                'Referer': window.location.origin,
+                'Origin': window.location.origin,
+              },
+              mode: 'cors',
+              cache: 'no-cache',
+            });
+            
+            if (!response.ok) {
+              throw new Error(`Fetch failed: ${response.status}`);
+            }
+
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            
+            // Create secure download with proper filename
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = `${product.title}.zip`;
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            
+            // Cleanup
+            setTimeout(() => {
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(downloadUrl);
+            }, 100);
+            
+            setDownloadComplete(true);
+            toast({
+              title: "Download Complete",
+              description: `${product.title} has been downloaded successfully`,
+            });
+            
+          } catch (fetchError) {
+            console.log('Blob download failed, falling back to direct link:', fetchError);
+            // Fallback to direct download
+            const link = document.createElement('a');
+            link.href = data.signedUrl;
+            link.download = `${product.title}.zip`;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
             document.body.removeChild(link);
-            window.URL.revokeObjectURL(downloadUrl);
-          }, 100);
-          
-          setDownloadComplete(true);
-          toast({
-            title: "Download Complete",
-            description: `${product.title} has been downloaded successfully`,
-          });
+            
+            setDownloadComplete(true);
+            toast({
+              title: "Download Started", 
+              description: `${product.title} download has been initiated`,
+            });
+          }
         } else {
           throw new Error('Unable to create secure download link');
         }
