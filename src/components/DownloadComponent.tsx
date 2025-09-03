@@ -48,30 +48,46 @@ const DownloadComponent = ({ product, onClose }: DownloadComponentProps) => {
           console.error('Supabase storage error:', error);
           throw new Error(`Storage error: ${error.message}`);
         }
-        
-        if (data?.signedUrl) {
-          // Fetch the file and trigger download
+
+                if (data?.signedUrl) {
+          // Fetch the file and trigger download with proper headers to prevent 406 errors
           const response = await fetch(data.signedUrl, {
+            method: 'GET',
             headers: {
-              'Content-Type': 'application/octet-stream',
+              'Accept': '*/*',
+              'Accept-Encoding': 'gzip, deflate, br',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'User-Agent': 'Mozilla/5.0 (compatible)',
+              'Referer': window.location.origin,
+              'Origin': window.location.origin,
             },
+            mode: 'cors',
+            cache: 'no-cache',
           });
           
           if (!response.ok) {
+            // If direct fetch fails with 406 or other errors, try alternative download method
+            if (response.status === 406) {
+              console.log('406 error detected, attempting direct link download...');
+              // Use direct download as fallback
+              const link = document.createElement('a');
+              link.href = data.signedUrl;
+              link.download = `${product.title}.zip`;
+              link.target = '_blank';
+              link.rel = 'noopener noreferrer';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              
+              setDownloadComplete(true);
+              toast({
+                title: "Download Started",
+                description: `${product.title} download has been initiated`,
+              });
+              return;
+            }
             throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
           }
-
-          const blob = await response.blob();
-          const downloadUrl = window.URL.createObjectURL(blob);
-          
-          // Create secure download with proper filename
-          const link = document.createElement('a');
-          link.href = downloadUrl;
-          link.download = `${product.title}.zip`; // Ensure proper file extension
-          link.style.display = 'none';
-          
-          document.body.appendChild(link);
-          link.click();
           
           // Cleanup
           setTimeout(() => {
