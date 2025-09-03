@@ -44,6 +44,16 @@ const DownloadComponent = ({ product, onClose }: DownloadComponentProps) => {
           .from('product-files')
           .createSignedUrl(filename, 3600); // 1 hour expiry
 
+        // Get file extension from the original file
+const fileExtension = filename.includes('.') ? '.' + filename.split('.').pop() : '.zip';
+
+// Create a clean filename using product title
+const sanitizedTitle = product.title
+  .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove special characters
+  .replace(/\s+/g, '_') // Replace spaces with underscores
+  .trim();
+
+const downloadFilename = `${sanitizedTitle}${fileExtension}`;
         if (error) {
           console.error('Supabase storage error:', error);
           throw new Error(`Storage error: ${error.message}`);
