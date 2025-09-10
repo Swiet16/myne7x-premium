@@ -48,24 +48,33 @@ const ProductUploadForm = ({ onProductUploaded }: ProductUploadFormProps) => {
 
   // ✅ Updated uploadFile function
   const uploadFile = async (file: File, bucket: string, customName?: string) => {
-    const fileExt = file.name.split('.').pop();
-
-    let fileName;
-    if (customName) {
-      const sanitizedName = customName
-        .replace(/[^a-zA-Z0-9\s\-_]/g, '') // remove special chars
-        .replace(/\s+/g, '_') // replace spaces with _
-        .trim();
-      fileName = `${sanitizedName}.${fileExt}`;
-    } else {
-      fileName = `${Math.random()}.${fileExt}`;
+  // Get the file extension from the original file
+  const originalFileName = file.name;
+  const lastDotIndex = originalFileName.lastIndexOf('.');
+  const fileExt = lastDotIndex !== -1 ? originalFileName.substring(lastDotIndex) : '';
+  
+  // Use custom name (product title) if provided, otherwise use original filename
+  let fileName;
+  if (customName) {
+    // Sanitize the custom name for filename
+    let sanitizedName = customName
+      .replace(/[^a-zA-Z0-9\s\-_.]/g, '') // Remove special characters except dots
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .trim();
+    
+    // Remove any existing extension from the product name to avoid duplication
+    const productNameDotIndex = sanitizedName.lastIndexOf('.');
+    if (productNameDotIndex !== -1) {
+      sanitizedName = sanitizedName.substring(0, productNameDotIndex);
     }
-
-    const filePath = `${fileName}`;
-
-    const { error } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, file);
+    
+    // Combine sanitized name with original file extension
+    fileName = `${sanitizedName}${fileExt}`;
+  } else {
+    fileName = `${Math.random()}${fileExt}`;
+  }
+  
+  const filePath = fileName;
 
     if (error) throw error;
 
