@@ -38,58 +38,32 @@ const DownloadComponent = ({ product, onClose }: DownloadComponentProps) => {
       if (product.file_url) {
         // Extract filename from URL - handle both direct paths and full URLs
         let filename = product.file_url.split('/').pop() || product.file_url;
+        
+        // Get file extension from the original file
+        const fileExtension = filename.includes('.') ? '.' + filename.split('.').pop() : '.zip';
+        
+        // Create a clean filename using product title
+        const sanitizedTitle = product.title
+          .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove special characters
+          .replace(/\s+/g, '_') // Replace spaces with underscores
+          .trim();
+        
+        const downloadFilename = `${sanitizedTitle}${fileExtension}`;
 
         // Get signed URL from Supabase storage
         const { data, error } = await supabase.storage
           .from('product-files')
           .createSignedUrl(filename, 3600); // 1 hour expiry
 
-        // Get file extension from the original file
-const fileExtension = filename.includes('.') ? '.' + filename.split('.').pop() : '.zip';
-
-// Create a clean filename using product title
-const sanitizedTitle = product.title
-  .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove special characters
-  .replace(/\s+/g, '_') // Replace spaces with underscores
-  .trim();
-
-const downloadFilename = `${sanitizedTitle}${fileExtension}`;
         if (error) {
           console.error('Supabase storage error:', error);
           throw new Error(`Storage error: ${error.message}`);
         }
         
         if (data?.signedUrl) {
-          // For production environments, try direct link download first (more reliable)
-          const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('replit');
+          console.log('Starting download with filename:', downloadFilename);
           
-          if (isProduction) {
-            console.log('Production environment detected, using direct download method');
-            // Use direct download method for production
-            const link = document.createElement('a');
-            link.href = data.signedUrl;
-            link.download = `${product.title}.zip`;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.style.display = 'none';
-            
-            document.body.appendChild(link);
-            
-            // Add a small delay to ensure the link is ready
-            setTimeout(() => {
-              link.click();
-              document.body.removeChild(link);
-              
-              setDownloadComplete(true);
-              toast({
-                title: "Download Started",
-                description: `${product.title} download has been initiated. Check your Downloads folder.`,
-              });
-            }, 100);
-            return;
-          }
-          
-          // For development, try blob method first with fallback
+          // ✅ FIXED: Always use blob method for reliable downloads without popups
           try {
             const response = await fetch(data.signedUrl, {
               method: 'GET',
@@ -98,8 +72,6 @@ const downloadFilename = `${sanitizedTitle}${fileExtension}`;
                 'Accept-Encoding': 'gzip, deflate, br',
                 'Accept-Language': 'en-US,en;q=0.9',
                 'User-Agent': 'Mozilla/5.0 (compatible)',
-                'Referer': window.location.origin,
-                'Origin': window.location.origin,
               },
               mode: 'cors',
               cache: 'no-cache',
@@ -110,18 +82,27 @@ const downloadFilename = `${sanitizedTitle}${fileExtension}`;
             }
 
             const blob = await response.blob();
-            const downloadUrl = window.URL.createObjectURL(blob);
             
-            // Create secure download with proper filename
+            // Create a new blob with proper type for downloads
+            const downloadBlob = new Blob([blob], { 
+              type: 'application/octet-stream' 
+            });
+            const downloadUrl = window.URL.createObjectURL(downloadBlob);
+            
+            // ✅ FIXED: Create download link WITHOUT target="_blank" (no popup)
             const link = document.createElement('a');
             link.href = downloadUrl;
-            link.download = `${product.title}.zip`;
+            link.download = downloadFilename;
             link.style.display = 'none';
+            // ❌ REMOVED: link.target = '_blank'; (this was causing popups)
+            // ❌ REMOVED: link.rel = 'noopener noreferrer'; (not needed for same-tab downloads)
             
             document.body.appendChild(link);
+            
+            // Use user-initiated click to avoid popup blockers
             link.click();
             
-            // Cleanup
+            // Cleanup after successful download
             setTimeout(() => {
               document.body.removeChild(link);
               window.URL.revokeObjectURL(downloadUrl);
@@ -134,24 +115,39 @@ const downloadFilename = `${sanitizedTitle}${fileExtension}`;
             });
             
           } catch (fetchError) {
-            console.log('Blob download failed, falling back to direct link:', fetchError);
-            // Fallback to direct download
-            const link = document.createElement('a');
-            link.href = data.signedUrl;
-            link.download = `${product.title}.zip`;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.style.display = 'none';
+            console.log('Blob download failed, trying direct method:', fetchError);
             
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            setDownloadComplete(true);
-            toast({
-              title: "Download Started", 
-              description: `${product.title} download has been initiated`,
-            });
+            // ✅ FIXED: Fallback direct download WITHOUT popup
+            try {
+              // Use window.location.href for same-tab navigation
+              const tempLink = document.createElement('a');
+              tempLink.href = data.signedUrl;
+              tempLink.download = downloadFilename;
+              tempLink.style.display = 'none';
+              // ❌ REMOVED: target="_blank" for no popup
+              
+              document.body.appendChild(tempLink);
+              tempLink.click();
+              document.body.removeChild(tempLink);
+              
+              setDownloadComplete(true);
+              toast({
+                title: "Download Started",
+                description: `${product.title} download has been initiated`,
+              });
+              
+            } catch (directError) {
+              console.log('Direct download failed, using location method:', directError);
+              
+              // Final fallback: navigate to download URL directly
+              window.location.href = data.signedUrl;
+              
+              setDownloadComplete(true);
+              toast({
+                title: "Download Started",
+                description: `${product.title} download has been initiated`,
+              });
+            }
           }
         } else {
           throw new Error('Unable to create secure download link');
